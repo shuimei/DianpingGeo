@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)http://leafletjs.com/examples/quick-start-example.html -->
+<html slick-uniqueid="3">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Baidu Map Example</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+        #mapid{
+            height: 600px;
+            width: 1400px;
+            position: absolute;
+            left: 50%;
+            top: 20%;
+            transform: translate(-50%);
+        }
+    </style>
+
+    <script type=text/javascript src="{{
+            url_for('static', filename='jquery.js') }}"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=0RtdF2Ivogp7AvKd7EDRcUPT"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/library/Heatmap/2.0/src/Heatmap_min.js"></script>
+</head>
+<body>
+{% extends "indexing.html" %}
+{% block content %}
+    <div id="mapid" class="leaflet-container leaflet-fade-anim" tabindex="0"></div>
+    <script type="text/javascript">
+        var map = new BMap.Map("mapid");          // 创建地图实例
+        var traffic = new BMap.TrafficLayer();        // 创建交通流量图层实例
+        map.addTileLayer(traffic);
+        var point = new BMap.Point(121.32,31.44);  // 创建点坐标
+        map.centerAndZoom(point, 15);                 // 初始化地图，设置中心点坐标和地图级别
+        setTimeout(function(){
+            map.setZoom(14);
+        }, 2000);  //2秒后放大到14级
+	    map.enableScrollWheelZoom(true);
+        // 添加带有定位的导航控件
+        var navigationControl = new BMap.NavigationControl({
+            // 靠左上角位置
+            anchor: BMAP_ANCHOR_TOP_LEFT,
+            // LARGE类型
+            type: BMAP_NAVIGATION_CONTROL_LARGE,
+            // 启用显示定位
+            enableGeolocation: true
+        });
+        map.addControl(navigationControl);
+        // 添加定位控件
+        var geolocationControl = new BMap.GeolocationControl();
+        geolocationControl.addEventListener("locationSuccess", function(e){
+            // 定位成功事件
+            var address = '';
+            address += e.addressComponent.province;
+            address += e.addressComponent.city;
+            address += e.addressComponent.district;
+            address += e.addressComponent.street;
+            address += e.addressComponent.streetNumber;
+            alert("当前定位地址为：" + address);
+        });
+        geolocationControl.addEventListener("locationError",function(e){
+            // 定位失败事件
+            alert(e.message);
+        });
+        map.addControl(geolocationControl);
+        var store;
+        $(function() {
+            $('a#idsubmit').bind('click', function() {
+                $.getJSON($SCRIPT_ROOT + '/_id', {
+                            id: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            store=data;
+                            $("#result").text(data.lng+','+data.lat);
+                            var point = new BMap.Point(data.lng, data.lat);
+                            var marker = new BMap.Marker(point);
+                            map.addOverlay(marker);
+                            var opts = {
+                                width : 200,     // 信息窗口宽度
+                                height: 100,     // 信息窗口高度
+                                title : data.name , // 信息窗口标题
+                                enableMessage:true,//设置允许信息窗发送短息
+                                message:""
+                            };
+                            var infoWindow = new BMap.InfoWindow(data.address, opts);  // 创建信息窗口对象
+                            marker.addEventListener("click", function(){
+                                map.openInfoWindow(infoWindow,point); //开启信息窗口
+                            });
+
+                        });
+                return false;
+            });
+        });
+
+        $(function() {
+            $('a#subsubmit').bind('click', function() {
+                $.getJSON($SCRIPT_ROOT + '/_subcategory', {
+                            subcategory: $('input[name="subcategory"]').val()
+                        },
+                        function(data) {
+                            var id,location,region,category, subcategory, address, name, lng, lat, confidence;
+                            store=data;
+                            id=store.id;
+                            location=store.location;
+                            region=store.region;
+                            category=store.category;
+                            subcategory=store.subcategory;
+                            address=store.address;
+                            name=store.name;
+                            lng=store.lng;
+                            lat=store.lat;
+                            confidence=store.confidence;
+                            var points = [];  // 添加海量点数据
+
+                            for (var k in id){
+                                if (isNaN(lat[k]) || isNaN(lng[k])){continue;}
+                                points.push(new BMap.Point(lng[k], lat[k]));
+                            }
+                            var options = {
+{#                                size: BMAP_POINT_SIZE_SMALL,#}
+                                shape: BMAP_POINT_SHAPE_WATERDROP,
+{#                                color: '#d340c3'#}
+                            };
+                            var pointCollection = new BMap.PointCollection(points, options);
+                            map.addOverlay(pointCollection);
+                        });
+                return false;
+            });
+        });
+    </script>
+    <!--content here-->
+    <h3>Query Store</h3>
+    ID:<input type=text size=5 name=id>
+    <span id=idresult>??</span>
+    <p><a href=# id=idsubmit>idsubmit<br/></a>
+    SUBCATEGORY:<input type=text size=5 name=subcategory>
+    <span id=subresult>??</span>
+    <p><a href=# id=subsubmit>subsubmit</a>
+{% endblock %}
+
+</body></html>

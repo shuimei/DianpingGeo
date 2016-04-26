@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Dianping Geo --- a visual city</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="../static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="../static/bootstrap/css/business-frontpage.css" rel="stylesheet">
+    <style type="text/css">
+        body{
+            background-image: url("../static/img/photo-1444044205806-38f3ed106c10.jpg");
+            color: #F7F7F7;
+        }
+        #map {
+            margin-top: 12px;
+            width: 1140px;
+            height: 400px;
+        }
+        .chart{
+            width: 300px;
+            height: 300px;
+        }
+        .btn{
+            background-color: #2563AD;
+            border: none;
+            height: 35px;
+            color: #fff;
+            border-radius: 5px;
+            padding: 6px 12px;
+            outline: 0;
+        }
+        input{
+            color: #313f4e;
+            width: 20%;
+        }
+    </style>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <!--JQuery-->
+    <script type=text/javascript src="{{
+            url_for('static', filename='jquery.js') }}"></script>
+    <script type=text/javascript src="{{
+            url_for('static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=0RtdF2Ivogp7AvKd7EDRcUPT"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/library/Heatmap/2.0/src/Heatmap_min.js"></script>
+    <script type=text/javascript src="{{
+            url_for('static', filename='echarts.min.js') }}"></script>
+    <script type=text/javascript src="{{
+            url_for('static', filename='jquery.datagrid.js') }}"></script>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Dianping GEO</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="#">About</a>
+                    </li>
+                    <li>
+                        <a href="#">Services</a>
+                    </li>
+                    <li>
+                        <a href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Image Background Page Header -->
+    <!-- Note: The background image is set within the business-casual.css file. -->
+
+
+    <!-- Page Content -->
+    <div class="container">
+        <div id="map"></div>
+        <script type="text/javascript">
+            var map = new BMap.Map("map",{mapType: BMAP_SATELLITE_MAP});
+            var point = new BMap.Point(121.32,31.43);  // 创建点坐标
+            map.centerAndZoom(point, 7);                 // 初始化地图，设置中心点坐标和地图级别
+            setTimeout(function(){
+            map.setZoom(9);
+        }, 2000);  //2秒后放大到9级
+	    map.enableScrollWheelZoom(true);
+        // 添加带有定位的导航控件
+        var navigationControl = new BMap.NavigationControl({
+            // 靠左上角位置
+            anchor: BMAP_ANCHOR_TOP_LEFT,
+            // LARGE类型
+            type: BMAP_NAVIGATION_CONTROL_LARGE,
+            // 启用显示定位
+            enableGeolocation: true
+        });
+        map.addControl(navigationControl);
+        // 添加定位控件
+        var geolocationControl = new BMap.GeolocationControl();
+        geolocationControl.addEventListener("locationSuccess", function(e){
+            // 定位成功事件
+            var address = '';
+            address += e.addressComponent.province;
+            address += e.addressComponent.city;
+            address += e.addressComponent.district;
+            address += e.addressComponent.street;
+            address += e.addressComponent.streetNumber;
+            alert("当前定位地址为：" + address);
+        });
+        geolocationControl.addEventListener("locationError",function(e){
+            // 定位失败事件
+            alert(e.message);
+        });
+        map.addControl(geolocationControl);
+
+        $(function(){
+            $('a#clear').bind('click',function(){
+                map.clearOverlays();
+            })
+        })
+        </script>
+
+
+        <hr>
+
+        <div class="row">
+            <div class="col-sm-8">
+                <h2>Introduction</h2>
+                <p>Based on Python requests module, we curled the popular life service website--dianping.com and made a database storing stores infomation registered on this site. </p>
+                <p>We built some simple demo to show the spatial distribution of stores of various categories.</p>
+                <a class="btn btn-default" href="#" id="clear" type="button">Clear</a><br/>
+                <input type=text size=8 name=id>
+                <p>
+                    <a class="btn btn-default" href="#" id="idsubmit" type="button">ID Search</a>
+                     <script type="text/javascript">
+                        $(function() {
+                            $('a#idsubmit').bind('click', function() {
+                        $.getJSON($SCRIPT_ROOT + '/_id', {
+                            id: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            var point = new BMap.Point(data.lng, data.lat);
+                            var marker = new BMap.Marker(point);
+                            map.addOverlay(marker);
+                            map.panTo(point);
+                            map.setCenter(point);
+                            map.setZoom(14);
+                            var opts = {
+                                width : 200,     // 信息窗口宽度
+                                height: 100,     // 信息窗口高度
+                                title : data.name , // 信息窗口标题
+                                enableMessage:true,//设置允许信息窗发送短息
+                                message:""
+                            };
+                            var infoWindow = new BMap.InfoWindow(data.address, opts);  // 创建信息窗口对象
+                            marker.addEventListener("click", function(){
+                            map.openInfoWindow(infoWindow,point); //开启信息窗口
+                            });
+
+                        });
+                return false;
+            });
+        });
+                    </script>
+{#                </p>#}
+{#                <p>#}
+                    <a class="btn btn-default" href="#" id="subcategorysubmit" type="button">Subcategory Search</a>
+                     <script type="text/javascript">
+                         var store;
+                        $(function() {
+                            $('a#subcategorysubmit').bind('click', function() {
+                        $.getJSON($SCRIPT_ROOT + '/_subcategory', {
+                            subcategory: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            var id,location,region,category, subcategory, address, name, lng, lat, confidence;
+                            store=data;
+                            id=store.id;
+                            location=store.location;
+                            region=store.region;
+                            category=store.category;
+                            subcategory=store.subcategory;
+                            address=store.address;
+                            name=store.name;
+                            lng=store.lng;
+                            lat=store.lat;
+                            confidence=store.confidence;
+                            var points = [];  // 添加海量点数据
+
+                            for (var k in id){
+                                if (isNaN(lat[k]) || isNaN(lng[k])){continue;}
+                                points.push(new BMap.Point(lng[k], lat[k]));
+                            }
+                            var options = {
+{#                                size: BMAP_POINT_SIZE_SMALL,#}
+                                shape: BMAP_POINT_SHAPE_WATERDROP,
+{#                                color: '#d340c3'#}
+                            };
+                            var pointCollection = new BMap.PointCollection(points, options);
+                            map.addOverlay(pointCollection);
+                        });
+                return false;
+            });
+        });
+                    </script>
+
+                    <a class="btn btn-default" href="#" id="categorysubmit" type="button">Category Search</a>
+                     <script type="text/javascript">
+                         var store;
+                        $(function() {
+                            $('a#categorysubmit').bind('click', function() {
+                        $.getJSON($SCRIPT_ROOT + '/_category', {
+                            category: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            var id,location,region,category, subcategory, address, name, lng, lat, confidence;
+                            store=data;
+                            id=store.id;
+                            location=store.location;
+                            region=store.region;
+                            category=store.category;
+                            subcategory=store.subcategory;
+                            address=store.address;
+                            name=store.name;
+                            lng=store.lng;
+                            lat=store.lat;
+                            confidence=store.confidence;
+                            var points = [];  // 添加海量点数据
+
+                            for (var k in id){
+                                if (isNaN(lat[k]) || isNaN(lng[k])){continue;}
+                                points.push(new BMap.Point(lng[k], lat[k]));
+                            }
+                            var options = {
+{#                                size: BMAP_POINT_SIZE_SMALL,#}
+                                shape: BMAP_POINT_SHAPE_WATERDROP,
+{#                                color: '#d340c3'#}
+                            };
+                            var pointCollection = new BMap.PointCollection(points, options);
+                            map.addOverlay(pointCollection);
+                        });
+                return false;
+            });
+        });
+                    </script>
+                </p>
+
+
+            </div>
+            <div class="col-sm-4">
+                <h2>Contact Us</h2>
+                <address>
+                    <strong>Betasy</strong>
+                    <br>Room 350, School of Geoscicences, ECNU
+                    <br>Minhang, Shanghai
+                    <br>
+                </address>
+                <address>
+                    <abbr title="Phone">Phone:</abbr>(+86) 18018562022
+                    <br>
+                    <abbr title="Email">Email:</abbr> <a href="mailto:#">dengshunqiang@outlook.com</a>
+                </address>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="chart" id="region_chart"></div>
+                <h2>Region Stats</h2>
+                <p></p>
+                <script type="text/javascript">
+                    //draw charts
+                    var region;
+                    $(function()
+                    {
+                        var myChart = echarts.init(document.getElementById('region_chart'));
+                        myChart.showLoading();
+                        $.getJSON($SCRIPT_ROOT + '/stats/group_by_region', { },
+                                function (data) {
+                                    region = data;
+                                    region = data;
+                                    var name = region.map(function(r){return r.name});
+                                    var count = region.map(function(r){return r.value});
+                                    option = {
+                                        tooltip: {
+                                            trigger: 'axis',
+                                            axisPointer: {
+                                                type: 'shadow'
+                                            }
+                                        },
+                                        legend: {
+                                            data: ['店铺数量']
+                                        },
+                                        grid: {
+                                            left: '3%',
+                                            right: '4%',
+                                            bottom: '3%',
+                                            containLabel: true
+                                        },
+                                        xAxis: {
+                                            type: 'value',
+                                            boundaryGap: [0, 0.02]
+                                        },
+                                        yAxis: {
+                                            type: 'category',
+                                            data:name
+                                        },
+                                        series: [
+                                            {
+                                                name: '区域',
+                                                type: 'bar',
+                                                data: count
+                                            }
+                                        ]
+                                    };
+                                    myChart.hideLoading();
+                                    myChart.setOption(option);
+                                });
+                    });
+                </script>
+            </div>
+            <div class="col-sm-4">
+                <div class="chart" id="category_chart"></div>
+                <h2>Category Stats</h2>
+                <p></p>
+                <script type="text/javascript">
+                    //draw charts
+                    var category;
+                    $(function()
+                    {
+                        var myChart = echarts.init(document.getElementById('category_chart'));
+                        myChart.showLoading();
+                        $.getJSON($SCRIPT_ROOT + '/stats/group_by_category', { },
+                                function (data) {
+                                    category = data;
+                                    var name = category.map(function(r){return r.name});
+                                    var count = category.map(function(r){return r.value});
+                                    option = {
+                                        tooltip: {
+                                            trigger: 'axis',
+                                            axisPointer: {
+                                                type: 'shadow'
+                                            }
+                                        },
+                                        legend: {
+                                            data: ['店铺数量']
+                                        },
+                                        grid: {
+                                            left: '3%',
+                                            right: '4%',
+                                            bottom: '3%',
+                                            containLabel: true
+                                        },
+                                        xAxis: {
+                                            type: 'value',
+                                            boundaryGap: [0, 0.02]
+                                        },
+                                        yAxis: {
+                                            type: 'category',
+                                            data:name
+                                        },
+                                        series: [
+                                            {
+                                                name: '分类',
+                                                type: 'bar',
+                                                data: count
+                                            }
+                                        ]
+                                    };
+                                    myChart.hideLoading();
+                                    myChart.setOption(option);
+                                });
+                    });
+                </script>
+            </div>
+            <div class="col-sm-4">
+                <div class="chart"></div>
+                <h2>Not Defined</h2>
+                <p></p>
+                <script type="text/javascript">
+                    //draw charts
+                </script>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>Copyright &copy; Betasy 2016</p>
+                </div>
+            </div>
+            <!-- /.row -->
+        </footer>
+
+    </div>
+    <!-- /.container -->
+
+
+
+</body>
+
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)http://leafletjs.com/examples/quick-start-example.html -->
+<html slick-uniqueid="3">
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Leaflet</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <style type="text/css">
+        #mapid{
+            height: 600px;
+            width: 1400px;
+            position: absolute;
+            left: 50%;
+            top: 20%;
+            transform: translate(-50%);
+        }
+    </style>
+
+    <script type=text/javascript src="{{
+            url_for('static', filename='jquery.js') }}"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+
+</head>
+<body>
+{% extends "indexing.html" %}
+{% block content %}
+    <div id="mapid" class="leaflet-container leaflet-fade-anim" tabindex="0"></div>
+    <script type="text/javascript">
+        var mymap = L.map('mapid').setView([31.44,121.32], 13);
+        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYmV0YXN5IiwiYSI6ImNpbXhkeTRvNjAzZXd1cGtrb216dHM0M3QifQ.D1m9N9gbtC6EZhkW-tpO3Q', {
+            maxZoom: 18,
+            id: 'betasy.pli9hpmm'
+        }).addTo(mymap);
+{#        var marker = L.marker([51.5, -0.09]).addTo(mymap);#}
+        var store;
+
+        $(function() {
+            $('a#idsubmit').bind('click', function() {
+                $.getJSON($SCRIPT_ROOT + '/_id', {
+                            id: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            store=data;
+                            $("#idresult").text(data.lng+','+data.lat);
+                            L.marker([data.lat, data.lng]).addTo(mymap)
+                                    .bindPopup(data.name+"<br/>"+data.address)
+                                    .openPopup();
+
+                        });
+                return false;
+            });
+        });
+
+        $(function() {
+            $('a#subsubmit').bind('click', function() {
+                $.getJSON($SCRIPT_ROOT + '/_subcategory', {
+                            subcategory: $('input[name="subcategory"]').val()
+                        },
+                        function(data) {
+                            var id,location,region,category, subcategory, address, name, lng, lat, confidence;
+                            store=data;
+                            id=store.id;
+                            location=store.location;
+                            region=store.region;
+                            category=store.category;
+                            subcategory=store.subcategory;
+                            address=store.address;
+                            name=store.name;
+                            lng=store.lng;
+                            lat=store.lat;
+                            confidence=store.confidence;
+                            for (var k in id){
+                                if (isNaN(lat[k]) || isNaN(lng[k])){continue;}
+                                var marker = L.marker([lat[k], lng[k]]).addTo(mymap);
+                            }
+                        });
+                return false;
+            });
+        });
+    </script>
+    <!--content here-->
+    <h3>Query Store</h3>
+    ID:<input type=text size=5 name=id>
+    <span id=idresult>??</span>
+    <p><a href=# id=idsubmit>idsubmit<br/></a>
+    SUBCATEGORY:<input type=text size=5 name=subcategory>
+    <span id=subresult>??</span>
+    <p><a href=# id=subsubmit>subsubmit</a>
+{% endblock %}
+
+</body></html>

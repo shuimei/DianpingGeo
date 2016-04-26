@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Map Test</title>
+    <style type="text/css">
+        #BasemapToggle,#LocateButton {
+            position: absolute;
+            top: 54px;
+            right: 70px;
+            z-index: 50;
+        }
+        #LocateButton{
+            right: 70px;
+            top: 200px;
+            padding: 14px;
+        }
+
+    </style>
+    <script type=text/javascript src="{{
+            url_for('static', filename='jquery.js') }}"></script>
+    <script type=text/javascript>
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.16/esri/css/esri.css">
+    <script src="https://js.arcgis.com/3.16/"></script>
+    <script type=text/javascript>
+        var map;
+        require([
+            "esri/map",
+            "esri/dijit/LocateButton",
+            "esri/dijit/BasemapToggle",
+            "dojo/domReady!"
+        ],function(Map, LocateButton, BasemapToggle)
+        {
+            map = new Map("map",{
+                center: [121.32,31.44],
+                zoom: 3,
+                basemap:"streets"
+            });
+            var toggle = new BasemapToggle(
+                    {
+                        map: map,
+                        basemap: "satellite"
+                    }, "BasemapToggle");
+            toggle.startup();
+
+            geoLocate = new LocateButton(
+                    {
+                        map: map
+                    }, "LocateButton");
+            geoLocate.startup();
+        });
+        var store;
+        $(function() {
+            $('a#submit').bind('click', function() {
+                $.getJSON($SCRIPT_ROOT + '/_id', {
+                            id: $('input[name="id"]').val()
+                        },
+                        function(data) {
+                            store=data;
+                            $("#result").text(data.lng+','+data.lat);
+
+                        });
+                return false;
+            });
+        });
+
+
+</script>
+</head>
+<body>
+{% extends "indexing.html" %}
+{% block content %}
+    <div id="map" style="height: 600px;width: 1400px;margin-left:120px;align-content: center"></div>
+    <div id="BasemapToggle"></div>
+    <div id="LocateButton"></div>
+    <h3>Query Store</h3>
+    ID:<input type=text size=5 name=id>
+    <span id=result></span>
+    <p><a href=# id=submit>submit</a>
+{% endblock %}
+</body>
+</html>

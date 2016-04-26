@@ -1,0 +1,33 @@
+<!doctype html>
+<title>DianpingGeo</title>
+<head>
+    <script type=text/javascript src="{{
+  url_for('static', filename='jquery.js') }}"></script>
+    <script type=text/javascript>
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
+</head>
+<body>
+<script type=text/javascript>
+    var return_data;
+    $(function() {
+        $('a#calculate').bind('click', function() {
+          $.getJSON($SCRIPT_ROOT + '/_eval_numbers', {
+            a: $('input[name="a"]').val(),
+            b: $('input[name="b"]').val(),
+              method: $('input[name="method"]').val()
+          }, function(data) {
+              return_data=data;
+            $("#result").text(data.result);
+          });
+          return false;
+        });
+      });
+</script>
+<h1>jQuery Example</h1>
+<p><input type=text size=5 name=a>
+    <input type=text size=3 name=method>
+   <input type=text size=5 name=b> =
+   <span id=result>?</span>
+<p><a href=# id=calculate>calculate server side</a>
+</body>
