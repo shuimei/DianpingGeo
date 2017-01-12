@@ -8,7 +8,7 @@ import pandas as pd
 
 
 # configuration
-DATABASE = r"P:\files\codes\flask-proj\dianpingGeo\store.db"
+DATABASE = "./store.db"
 DEBUG = True
 SECRET_KEY = 'SECRET_KEY'
 USERNAME = 'admin'
